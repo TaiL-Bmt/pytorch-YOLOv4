@@ -355,13 +355,14 @@ def train(model, device, config, save_cp_path, epochs=5, batch_size=1, save_cp=T
                 pbar.update(images.shape[0])
 
             if save_cp:
-                if epoch % 10 == 0:
+                if epoch % 50 == 0:
                     try:
-                        os.mkdir(config.checkpoints)
+                        os.path.exists(save_cp_path)
                         logging.info('Created checkpoint directory')
                     except OSError:
                         pass
-                    torch.save(model.state_dict(), os.path.join(config.checkpoints, f'Yolov4_epoch{epoch + 1}.pth'))
+                    latest_weights = 'pytorch.yolo4.latest.weights.pth'
+                    torch.save(model.state_dict(), os.path.join(config.checkpoints, latest_weights))
                     logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
