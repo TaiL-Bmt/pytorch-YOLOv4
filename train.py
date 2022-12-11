@@ -243,7 +243,7 @@ def collate(batch):
     return images, bboxes
 
 
-def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=20, img_scale=0.5):
+def train(model, device, config, save_cp_path, epochs=5, batch_size=1, save_cp=True, log_step=20, img_scale=0.5):
     train_dataset = Yolo_dataset(config.train_label, config)
     val_dataset = Yolo_dataset(config.val_label, config)
 
@@ -355,13 +355,14 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
                 pbar.update(images.shape[0])
 
             if save_cp:
-                try:
-                    os.mkdir(config.checkpoints)
-                    logging.info('Created checkpoint directory')
-                except OSError:
-                    pass
-                torch.save(model.state_dict(), os.path.join(config.checkpoints, f'Yolov4_epoch{epoch + 1}.pth'))
-                logging.info(f'Checkpoint {epoch + 1} saved !')
+                if epoch % 10 == 0:
+                    try:
+                        os.mkdir(config.checkpoints)
+                        logging.info('Created checkpoint directory')
+                    except OSError:
+                        pass
+                    torch.save(model.state_dict(), os.path.join(config.checkpoints, f'Yolov4_epoch{epoch + 1}.pth'))
+                    logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
 
@@ -378,11 +379,11 @@ def get_args(**kwargs):
                         help='Load model from a .pth file')
     parser.add_argument('-g', '--gpu', metavar='G', type=str, default='-1',
                         help='GPU', dest='gpu')
-    parser.add_argument('-dir', '--data-dir', type=str, default=None,
-                        help='dataset dir', dest='dataset_dir')
+    parser.add_argument('-dir', '--data-dir', type=str, default=None, help='dataset dir', dest='dataset_dir')
     parser.add_argument('-pretrained',type=str,default=None,help='pretrained yolov4.conv.137')
     parser.add_argument('-classes',type=int,default=80,help='dataset classes')
     parser.add_argument('-train_label_path',dest='train_label',type=str,default='train.txt',help="train label path")
+    parser.add_argument('-save_checkpoint_path',dest='save_checkpoint_path', type=str, default='/content/gdrive/MyDrvie/colab', help="save checkpoint path")
     parser.add_argument('-epochs',dest='TRAIN_EPOCHS',type=int,default=10,help="number of training epochs")
     args = vars(parser.parse_args())
 
@@ -444,7 +445,9 @@ if __name__ == "__main__":
         train(model=model,
               config=cfg,
               epochs=cfg.TRAIN_EPOCHS,
-              device=device, )
+              device=device,
+              save_cp_path=cfg.save_checkpoint_path,
+              )
     except KeyboardInterrupt:
         torch.save(model.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
